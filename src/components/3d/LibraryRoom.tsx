@@ -23,6 +23,9 @@ export function LibraryRoom({ clubConfig }: LibraryRoomProps) {
 
   return (
     <group>
+      {/* Ambient Light for overall illumination */}
+      <ambientLight intensity={0.6} color="#ffffff" />
+      
       {/* Circular Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[roomRadius, 64]} />
@@ -38,7 +41,7 @@ export function LibraryRoom({ clubConfig }: LibraryRoomProps) {
       {/* Circular Walls */}
       <mesh position={[0, wallHeight / 2, 0]} receiveShadow>
         <cylinderGeometry args={[roomRadius, roomRadius, wallHeight, 64, 1, true]} />
-        <meshStandardMaterial color="#4a3b32" side={THREE.BackSide} />
+        <meshStandardMaterial color="#87CEEB" side={THREE.BackSide} />
       </mesh>
 
       {/* Starry Sky Dome */}
@@ -95,7 +98,7 @@ export function LibraryRoom({ clubConfig }: LibraryRoomProps) {
               <sphereGeometry args={[0.3]} />
               <meshBasicMaterial color="#ffaa44" />
           </mesh>
-          <pointLight position={[0, -1, 0]} intensity={1.5} color="#ffaa44" distance={20} castShadow shadow-bias={-0.0001} />
+          <pointLight position={[0, -1, 0]} intensity={3.0} color="#ffaa44" distance={20} castShadow shadow-bias={-0.0001} />
       </group>
     </group>
   );
