@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../utils/supabase/client';
+import { getAuthRedirectUrl } from '../../utils/config';
 
 interface LoginProps {
   onLogin: (session: any) => void;
@@ -22,6 +23,9 @@ export function Login({ onLogin }: LoginProps) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: getAuthRedirectUrl(),
+          },
         });
         if (error) throw error;
         if (data.session) onLogin(data.session);

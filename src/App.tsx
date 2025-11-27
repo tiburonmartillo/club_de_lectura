@@ -88,10 +88,38 @@ export default function App() {
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
+      // Handle auth callback from email verification
+      const handleAuthCallback = async () => {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          // Exchange tokens for session
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            console.error('Error setting session:', error);
+          } else if (data.session) {
+            setSession(data.session);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+      };
+
+      // Check for auth callback
+      handleAuthCallback();
+
+      // Get initial session
       supabase.auth.getSession().then(({ data: { session } }) => {
           setSession(session);
       });
 
+      // Listen for auth state changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           setSession(session);
       });
