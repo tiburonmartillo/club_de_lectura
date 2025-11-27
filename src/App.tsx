@@ -7,6 +7,7 @@ import { BookModal } from './components/ui/BookModal';
 import { AdminPanel } from './components/ui/AdminPanel';
 import { HUD } from './components/ui/HUD';
 import { BookSearch } from './components/ui/BookSearch';
+import { MobileControls } from './components/ui/MobileControls';
 import { LibraryRoom } from './components/3d/LibraryRoom';
 import { Bookshelf } from './components/3d/Bookshelf';
 import { Nightstand } from './components/3d/Nightstand';
@@ -242,6 +243,16 @@ export default function App() {
         onStart={() => setIsNavigating(true)}
         onOpenAdmin={() => { setIsNavigating(false); setShowAdmin(true); }}
         hasOpenModal={!!selectedBook || showAdmin || showSearch}
+      />
+
+      <MobileControls 
+        isNavigating={isNavigating}
+        onMoveStart={(direction) => {
+          // This will be handled by the Player component via window functions
+        }}
+        onMoveEnd={(direction) => {
+          // This will be handled by the Player component via window functions
+        }}
       />
 
       {selectedBook && (

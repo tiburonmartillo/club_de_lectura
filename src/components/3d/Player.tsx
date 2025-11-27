@@ -7,15 +7,65 @@ import * as THREE from 'three';
 interface PlayerProps {
     isNavigating: boolean;
     onToggleNav: (status: boolean) => void;
+    onMoveStart?: (direction: 'forward' | 'backward' | 'left' | 'right') => void;
+    onMoveEnd?: (direction: 'forward' | 'backward' | 'left' | 'right') => void;
 }
 
-export function Player({ isNavigating, onToggleNav }: PlayerProps) {
+export function Player({ isNavigating, onToggleNav, onMoveStart, onMoveEnd }: PlayerProps) {
     const { camera } = useThree();
     const controlsRef = useRef<PointerLockControlsImpl>(null);
     const moveForward = useRef(false);
     const moveBackward = useRef(false);
     const moveLeft = useRef(false);
     const moveRight = useRef(false);
+    
+    // Expose movement functions for mobile controls
+    useEffect(() => {
+        if (!onMoveStart || !onMoveEnd) return;
+        
+        const handleMoveStart = (direction: 'forward' | 'backward' | 'left' | 'right') => {
+            switch (direction) {
+                case 'forward':
+                    moveForward.current = true;
+                    break;
+                case 'backward':
+                    moveBackward.current = true;
+                    break;
+                case 'left':
+                    moveLeft.current = true;
+                    break;
+                case 'right':
+                    moveRight.current = true;
+                    break;
+            }
+        };
+        
+        const handleMoveEnd = (direction: 'forward' | 'backward' | 'left' | 'right') => {
+            switch (direction) {
+                case 'forward':
+                    moveForward.current = false;
+                    break;
+                case 'backward':
+                    moveBackward.current = false;
+                    break;
+                case 'left':
+                    moveLeft.current = false;
+                    break;
+                case 'right':
+                    moveRight.current = false;
+                    break;
+            }
+        };
+        
+        // Store callbacks in refs to avoid re-creating the effect
+        (window as any).__playerMoveStart = handleMoveStart;
+        (window as any).__playerMoveEnd = handleMoveEnd;
+        
+        return () => {
+            delete (window as any).__playerMoveStart;
+            delete (window as any).__playerMoveEnd;
+        };
+    }, [onMoveStart, onMoveEnd]);
     
     // Handle keyboard input
     useEffect(() => {
@@ -72,8 +122,9 @@ export function Player({ isNavigating, onToggleNav }: PlayerProps) {
 
     // Handle movement loop
     useFrame((state, delta) => {
-        // Only update movement if locked
-        if (!controlsRef.current?.isLocked) return;
+        // For mobile, allow movement even if not locked (since pointer lock doesn't work on mobile)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (!isMobile && !controlsRef.current?.isLocked) return;
 
         const speed = 5.0; 
         const velocity = new THREE.Vector3();
@@ -86,8 +137,27 @@ export function Player({ isNavigating, onToggleNav }: PlayerProps) {
         if (moveForward.current || moveBackward.current) velocity.z -= direction.z * speed * delta;
         if (moveLeft.current || moveRight.current) velocity.x -= direction.x * speed * delta;
 
-        controlsRef.current.moveRight(direction.x * speed * delta); 
-        controlsRef.current.moveForward(direction.z * speed * delta);
+        // For mobile, move camera directly since pointer lock doesn't work
+        if (isMobile && controlsRef.current) {
+            // Calculate movement in camera's local space
+            const moveVector = new THREE.Vector3();
+            const forward = new THREE.Vector3(0, 0, -1);
+            const right = new THREE.Vector3(1, 0, 0);
+            
+            forward.applyQuaternion(camera.quaternion);
+            right.applyQuaternion(camera.quaternion);
+            
+            forward.multiplyScalar(direction.z * speed * delta);
+            right.multiplyScalar(direction.x * speed * delta);
+            
+            moveVector.add(forward);
+            moveVector.add(right);
+            
+            camera.position.add(moveVector);
+        } else if (controlsRef.current) {
+            controlsRef.current.moveRight(direction.x * speed * delta); 
+            controlsRef.current.moveForward(direction.z * speed * delta);
+        }
         
         // Height lock
         state.camera.position.y = 1.7;
