@@ -62,9 +62,9 @@ export function MobileControls({ onMoveStart, onMoveEnd, onRotate, isNavigating 
 
   return (
     <>
-      {/* Rotation area - right side of screen */}
+      {/* Rotation area - center/upper area of screen (avoid bottom where movement controls are) */}
       <div
-        className="fixed top-0 right-0 w-1/3 h-full z-40 pointer-events-auto md:hidden"
+        className="fixed top-0 left-0 right-0 bottom-32 z-40 pointer-events-auto md:hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
