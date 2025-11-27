@@ -19,10 +19,8 @@ export function Player({ isNavigating, onToggleNav, onMoveStart, onMoveEnd }: Pl
     const moveLeft = useRef(false);
     const moveRight = useRef(false);
     
-    // Expose movement functions for mobile controls
+    // Expose movement and rotation functions for mobile controls
     useEffect(() => {
-        if (!onMoveStart || !onMoveEnd) return;
-        
         const handleMoveStart = (direction: 'forward' | 'backward' | 'left' | 'right') => {
             switch (direction) {
                 case 'forward':
@@ -56,16 +54,30 @@ export function Player({ isNavigating, onToggleNav, onMoveStart, onMoveEnd }: Pl
                     break;
             }
         };
+
+        const handleRotate = (deltaX: number, deltaY: number) => {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (!isMobile) return;
+            
+            // Rotate camera for mobile (since pointer lock doesn't work)
+            const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+            euler.y -= deltaX;
+            euler.x -= deltaY;
+            euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x)); // Limit vertical rotation
+            camera.quaternion.setFromEuler(euler);
+        };
         
-        // Store callbacks in refs to avoid re-creating the effect
+        // Store callbacks in window for mobile controls
         (window as any).__playerMoveStart = handleMoveStart;
         (window as any).__playerMoveEnd = handleMoveEnd;
+        (window as any).__playerRotate = handleRotate;
         
         return () => {
             delete (window as any).__playerMoveStart;
             delete (window as any).__playerMoveEnd;
+            delete (window as any).__playerRotate;
         };
-    }, [onMoveStart, onMoveEnd]);
+    }, [camera]);
     
     // Handle keyboard input
     useEffect(() => {

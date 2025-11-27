@@ -253,6 +253,12 @@ export default function App() {
         onMoveEnd={(direction) => {
           // This will be handled by the Player component via window functions
         }}
+        onRotate={(deltaX, deltaY) => {
+          // Rotate camera for mobile
+          if ((window as any).__playerRotate) {
+            (window as any).__playerRotate(deltaX, deltaY);
+          }
+        }}
       />
 
       {selectedBook && (

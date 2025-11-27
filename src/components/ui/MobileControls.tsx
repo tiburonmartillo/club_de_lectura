@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 interface MobileControlsProps {
   onMoveStart: (direction: 'forward' | 'backward' | 'left' | 'right') => void;
   onMoveEnd: (direction: 'forward' | 'backward' | 'left' | 'right') => void;
+  onRotate?: (deltaX: number, deltaY: number) => void;
   isNavigating: boolean;
 }
 
-export function MobileControls({ onMoveStart, onMoveEnd, isNavigating }: MobileControlsProps) {
+export function MobileControls({ onMoveStart, onMoveEnd, onRotate, isNavigating }: MobileControlsProps) {
   // Only show on mobile devices
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   
@@ -30,9 +31,48 @@ export function MobileControls({ onMoveStart, onMoveEnd, isNavigating }: MobileC
     }
   };
 
+  // Handle rotation with touch
+  const rotationRef = useRef<{ startX: number; startY: number; isActive: boolean } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && !rotationRef.current) {
+      const touch = e.touches[0];
+      rotationRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        isActive: true,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (rotationRef.current && e.touches.length === 1 && onRotate) {
+      const touch = e.touches[0];
+      const deltaX = (touch.clientX - rotationRef.current.startX) * 0.002;
+      const deltaY = (touch.clientY - rotationRef.current.startY) * 0.002;
+      onRotate(deltaX, deltaY);
+      rotationRef.current.startX = touch.clientX;
+      rotationRef.current.startY = touch.clientY;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    rotationRef.current = null;
+  };
+
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto md:hidden">
-      <div className="relative w-64 h-64">
+    <>
+      {/* Rotation area - right side of screen */}
+      <div
+        className="fixed top-0 right-0 w-1/3 h-full z-40 pointer-events-auto md:hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      />
+
+      {/* Movement controls */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto md:hidden">
+        <div className="relative w-64 h-64">
         {/* Central area */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-stone-900/80 border-2 border-amber-500/50 backdrop-blur-md"></div>
@@ -154,7 +194,8 @@ export function MobileControls({ onMoveStart, onMoveEnd, isNavigating }: MobileC
           </svg>
         </button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
